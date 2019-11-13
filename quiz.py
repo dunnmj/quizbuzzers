@@ -1,9 +1,16 @@
 from gpiozero import LED, Button
 from signal import pause
 from time import sleep
+from pythonosc.udp_client import SimpleUDPClient as OSC
+import os
 
 reset_led = LED(18)
 reset_button = Button(17, hold_time=2)
+
+ip = "192.168.1.255"
+port = 53000
+
+client = OSC(ip, port)
 
 button1 = Button(21, pull_up=False)
 button2 = Button(20, pull_up=False)
@@ -22,9 +29,9 @@ led5 = LED(5)
 led6 = LED(11)
 led7 = LED(9)
 led8 = LED(10)
-
+leds = [led1, led2, led3, led4, led5, led6, led7, led8]
 toggle = 1
-
+    
 
 def reset_press():
     global toggle
@@ -64,78 +71,22 @@ while toggle == 1:
 
 print("Play Begins...")
 
-while True:
-    while toggle == 0:
-        if GPIO.input(switch1) == 0:
-            GPIO.output(relay1, 1)
-            toggle = 1
-            print("Player 1 Buzzed")
-            print("Press Reset...")
-            os.system('mplayer -really-quiet /media/usb0/player1.mp3')
-            break
-        if GPIO.input(switch2) == 0:
-            GPIO.output(relay2, 1)
-            toggle = 1
-            print("Player 2 Buzzed")
-            print("Press Reset...")
-            os.system('mplayer -really-quiet /media/usb0/player2.mp3')
-            break
-        if GPIO.input(switch3) == 0:
-            GPIO.output(relay3, 1)
-            toggle = 1
-            print("Player 3 Buzzed")
-            print("Press Reset...")
-            os.system('mplayer -really-quiet /media/usb0/player3.mp3')
-            break
-        if GPIO.input(switch4) == 0:
-            GPIO.output(relay4, 1)
-            toggle = 1
-            print("Player 4 Buzzed")
-            print("Press Reset...")
-            os.system('mplayer -really-quiet /media/usb0/player4.mp3')
-            break
-        if GPIO.input(switch5) == 0:
-            GPIO.output(relay5, 1)
-            toggle = 1
-            print("Player 5 Buzzed")
-            print("Press Reset...")
-            os.system('mplayer -really-quiet /media/usb0/player5.mp3')
-            break
-        if GPIO.input(switch6) == 0:
-            GPIO.output(relay6, 1)
-            toggle = 1
-            print("Player 6 Buzzed")
-            print("Press Reset...")
-            os.system('mplayer -really-quiet /media/usb0/player6.mp3')
-            break
-        if GPIO.input(switch7) == 0:
-            GPIO.output(relay7, 1)
-            toggle = 1
-            print("Player 7 Buzzed")
-            print("Press Reset...")
-            os.system('mplayer -really-quiet /media/usb0/player7.mp3')
-            break
-        if GPIO.input(switch8) == 0:
-            GPIO.output(relay8, 1)
-            toggle = 1
-            print("Player 8 Buzzed")
-            print("Press Reset...")
-            os.system('mplayer -really-quiet /media/usb0/player8.mp3')
-            break
 
-    GPIO.output(reset_led, 1)
+def buzz_in(player_num):
+    leds[player_num-1].on()
+    client.send_message("/cue/{}/start".format(player_num), 0)
+    os.system('aplay /home/pi/Horn.wav')
+    sleep(1)
+    leds[player_num-1].off()
 
-    while toggle == 1:
-        print("Waiting for reset")
-        GPIO.wait_for_edge(reset_switch, GPIO.RISING)
-        reset_press(reset_switch)
 
-    GPIO.output(relay1, 0)
-    GPIO.output(relay2, 0)
-    GPIO.output(relay3, 0)
-    GPIO.output(relay4, 0)
-    GPIO.output(relay5, 0)
-    GPIO.output(relay6, 0)
-    GPIO.output(relay7, 0)
-    GPIO.output(relay8, 0)
-    print("System Reset")
+button1.when_pressed = (lambda: buzz_in(1))
+button2.when_pressed = (lambda: buzz_in(2))
+button3.when_pressed = (lambda: buzz_in(3))
+button4.when_pressed = (lambda: buzz_in(4))
+button5.when_pressed = (lambda: buzz_in(5))
+button6.when_pressed = (lambda: buzz_in(6))
+button7.when_pressed = (lambda: buzz_in(7))
+button8.when_pressed = (lambda: buzz_in(8))
+
+pause()
